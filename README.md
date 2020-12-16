@@ -1,3 +1,7 @@
+# About this Project
+
+This was a quick one day project to see if I can create an app that generates ethereum wallets and also checks their balances. Perhaps one day I'll get lucky and get one of Binance's wallets.
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
