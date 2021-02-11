@@ -29,22 +29,31 @@ const addressQueryParam = (wallets: {}): string => {
 
 const GenerateEthereumWallets: React.FunctionComponent = () => {
     const [wallets, setWallets] = useState<IWallets>({});
+    const [jackpot, setJackpot] = useState<IWallets>({})
 
-    const handleClick = (): void => {
+    const generateOnce = (): void => {
         const walletMap = generateWallets(20);
 
         const onSuccess = (response: IResponse): void => {
             setWallets({});
 
             const tempWallets: IWallets = {};
+            const jackpotWallets: IWallets = {};
 
             response.result.forEach((account: IAccount) => {
-                tempWallets[account.account] = {
+                const accountInfo = {
                     balance: account.balance,
                     privateKey: walletMap[account.account]
                 }
+
+                if (account.balance !== "0") {
+                    jackpotWallets[account.account] = accountInfo;
+                }
+
+                tempWallets[account.account] = accountInfo;
             });
 
+            setJackpot(jackpotWallets);
             setWallets(tempWallets);
         }
 
@@ -60,9 +69,45 @@ const GenerateEthereumWallets: React.FunctionComponent = () => {
             .catch(onError)
     }
 
+    const generateMultipleTimes = (): void => {
+        // currently set to 100 to test. However, the stop condition in reality would be to check if we hit a jackpot.
+        const maxIterations = 100;
+
+        let currentIterationCount = 0;
+
+        const intervalCallback = setInterval(() => {
+            if (currentIterationCount >= maxIterations) clearInterval(intervalCallback);
+            currentIterationCount++
+            generateOnce();
+        }, 1000)
+    }
+
     return (
         <div>
-            <button className="generate-wallets-button" onClick={handleClick}>Generate Ethereum Wallets</button>
+            <button className="generate-wallets-button" onClick={generateOnce}>Generate Ethereum Wallets Once</button>
+            <button className="generate-wallets-button" onClick={generateMultipleTimes}>Generate Ethereum Wallets Many Times</button>
+
+            <table className="wallet-table">
+                <thead>
+                <tr>
+                    <th>Balance</th>
+                    <th>Public Key</th>
+                    <th>Private Key</th>
+                </tr>
+                </thead>
+                <tbody>
+                {Object.keys(jackpot).map(jackpotKey => (
+                    <tr key={jackpotKey}>
+                        <th className="wallet-table__balance">{jackpot[jackpotKey].balance}</th>
+                        <th className="wallet-table__public-key">
+                            <a className="wallet-table__jackpot" href={`https://etherscan.io/address/${jackpotKey}`} target="_blank" rel="noreferrer">{jackpotKey}</a>
+                        </th>
+                        <th className="wallet-table__private-key">{jackpot[jackpotKey].privateKey}</th>
+                    </tr>
+                ))}
+                </tbody>
+            </table>
+
             <table className="wallet-table">
                 <thead>
                 <tr>
