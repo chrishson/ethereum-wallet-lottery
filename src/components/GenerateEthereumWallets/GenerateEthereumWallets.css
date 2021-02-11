@@ -1,6 +1,6 @@
 .generate-wallets-button {
     background-color: #4CAF50; /* Green */
-    border: none;
+    border: 1px solid black;
     color: white;
     padding: 15px 32px;
     text-align: center;
@@ -12,7 +12,7 @@
 }
 
 .generate-wallets-button:hover {
-    background-color: blue; /* Green */
+    background-color: blue;
 }
 
 .wallet-table {
@@ -35,6 +35,10 @@
     font-size: 20px;
 }
 
+.wallet-table__jackpot {
+    color: red;
+}
+
 th {
     border-right: 1px solid white;
     border-bottom: 1px solid white;
@@ -43,6 +47,7 @@ a {
     text-decoration:none;
     color: #4CAF50;
 }
+
 a:hover {
     color: blue;
 }
