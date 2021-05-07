@@ -1,17 +1,26 @@
 import React, { useState } from "react";
 import EthWallet from 'ethereumjs-wallet'
 import './GenerateEthereumWallets.css';
+import {getWalletsAsync, IWallet, IWalletsQueryResults} from "../../api/etherscan";
 
-// API Key from https://etherscan.io/
-const apiKey = ""
+interface IWalletPublicPrivateKeyPair {
+    [key: string]: string;
+}
 
-const generateWallets = (walletCount: number): IWalletMap => {
+interface IWalletBalanceAndPrivateKeys {
+    [key: string]: {
+        balance: string;
+        privateKey: string;
+    }
+}
+
+const generateWallets = (walletCount: number): IWalletPublicPrivateKeyPair => {
     if (walletCount > 20) {
         console.log("Sorry, 20 is the max.")
         walletCount = 20;
     }
 
-    const walletMap: IWalletMap = {}
+    const walletMap: IWalletPublicPrivateKeyPair = {}
 
     for (let i = 0; i < walletCount; i++) {
         const newWallet = EthWallet.generate();
@@ -23,62 +32,51 @@ const generateWallets = (walletCount: number): IWalletMap => {
     return walletMap;
 }
 
-const addressQueryParam = (wallets: {}): string => {
+const walletAddressQueryParam = (wallets: {}): string => {
     return Object.keys(wallets).join(",");
 }
 
 const GenerateEthereumWallets: React.FunctionComponent = () => {
-    const [wallets, setWallets] = useState<IWallets>({});
-    const [jackpot, setJackpot] = useState<IWallets>({})
+    const [wallets, setWallets] = useState<IWalletBalanceAndPrivateKeys>({});
+    const [jackpot, setJackpot] = useState<IWalletBalanceAndPrivateKeys>({})
 
-    const generateOnce = (): void => {
+    const generateOnce = async () => {
         const walletMap = generateWallets(20);
+        const walletBalances: IWalletsQueryResults = await getWalletsAsync(walletAddressQueryParam(walletMap))
 
-        const onSuccess = (response: IResponse): void => {
-            setWallets({});
+        setWallets({});
 
-            const tempWallets: IWallets = {};
-            const jackpotWallets: IWallets = {};
+        const tempWallets: IWalletBalanceAndPrivateKeys = {};
+        const jackpotWallets: IWalletBalanceAndPrivateKeys = {};
 
-            response.result.forEach((account: IAccount) => {
-                const accountInfo = {
-                    balance: account.balance,
-                    privateKey: walletMap[account.account]
-                }
+        walletBalances.result.forEach((wallet: IWallet) => {
+            const accountInfo = {
+                balance: wallet.balance,
+                privateKey: walletMap[wallet.account]
+            }
 
-                if (account.balance !== "0") {
-                    jackpotWallets[account.account] = accountInfo;
-                }
+            if (wallet.balance !== "0") {
+                jackpotWallets[wallet.account] = accountInfo;
+            }
 
-                tempWallets[account.account] = accountInfo;
-            });
+            tempWallets[wallet.account] = accountInfo;
+        });
 
-            setJackpot(jackpotWallets);
-            setWallets(tempWallets);
-        }
+        setWallets(tempWallets);
+        setJackpot(jackpotWallets);
 
-        const onError = (error: any): void => {
-            console.log(error);
-        }
-
-        const getWalletBalanceURL = `https://api.etherscan.io/api?module=account&action=balancemulti&address=${addressQueryParam(walletMap)}&tag=latest&apikey=${apiKey}`
-
-        fetch(getWalletBalanceURL)
-            .then(response => response.json())
-            .then(onSuccess)
-            .catch(onError)
     }
 
     const generateMultipleTimes = (): void => {
         // currently set to 100 to test. However, the stop condition in reality would be to check if we hit a jackpot.
-        const maxIterations = 100;
+        const maxIterations = 10000;
 
         let currentIterationCount = 0;
 
-        const intervalCallback = setInterval(() => {
+        const intervalCallback = setInterval(async () => {
             if (currentIterationCount >= maxIterations) clearInterval(intervalCallback);
             currentIterationCount++
-            generateOnce();
+            await generateOnce();
         }, 1000)
     }
 
@@ -131,27 +129,5 @@ const GenerateEthereumWallets: React.FunctionComponent = () => {
         </div>
     );
 };
-
-interface IWalletMap {
-    [key: string]: string;
-}
-
-interface IWallets {
-    [key: string]: {
-        balance: string;
-        privateKey: string;
-    }
-}
-
-interface IResponse {
-    status: string;
-    message: string;
-    result: [IAccount];
-}
-
-interface IAccount {
-    account: string;
-    balance: string;
-}
 
 export default GenerateEthereumWallets;
