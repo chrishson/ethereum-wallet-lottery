@@ -1,5 +1,5 @@
 const ETHERSCAN_URI = `https://api.etherscan.io`
-const API_KEY = `52Z4PW9K9MJPHK95FNFA7T57F4G6S2PPCE`
+const API_KEY = ``
 
 export const getWalletsQuery = (
     wallets: string
